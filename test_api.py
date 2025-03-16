@@ -2,6 +2,9 @@ import requests
 import base64
 from pathlib import Path
 
+with open('api_key.txt', 'r') as file:
+    API_KEY = file.read().strip()
+
 def test_image_recognition(image_path, api_url):
     """
     Test the image recognition API with a local image file
@@ -21,7 +24,7 @@ def test_image_recognition(image_path, api_url):
         # Prepare the request
         headers = {
             'Content-Type': 'application/json',
-            'x-api-key': '1vt03WevBS1G6YeDNV08D9yYmuARaFml6shu4pom'
+            'x-api-key': API_KEY
         }
         
         payload = {
