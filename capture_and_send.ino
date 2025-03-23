@@ -1,7 +1,32 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include "esp_camera.h"
+#include <Preferences.h>
 
+
+bool initWiFi(char *ssid, char *password) {
+  Serial.println("Connecting to WiFi...");
+  
+  WiFi.begin(ssid, password);
+  
+  // Wait up to 10 seconds for connection
+  int attempts = 0;
+  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+    delay(500);
+    Serial.print(".");
+    attempts++;
+  }
+  Serial.println();
+  
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.print("Connected to WiFi. IP: ");
+    Serial.println(WiFi.localIP());
+    return true;
+  } else {
+    Serial.println("Failed to connect to WiFi");
+    return false;
+  }
+}
 /**
  * Captures an image from the Xiao ESP32S3 camera and sends it to AWS Lambda
  * 
@@ -9,7 +34,7 @@
  * @param api_key Optional API key for the Lambda function (pass empty string if not needed)
  * @return true if successful, false otherwise
  */
-bool captureAndSendImageToLambda(const char* lambda_url, const char* api_key = "") {
+bool captureAndSendImageToLambda(const char* lambda_url) {
   // Get camera frame buffer
   camera_fb_t* fb = esp_camera_fb_get();
   if (!fb) {
@@ -19,6 +44,24 @@ bool captureAndSendImageToLambda(const char* lambda_url, const char* api_key = "
   
   Serial.printf("Image captured, size: %d bytes\n", fb->len);
   
+  Preferences preferences;
+  preferences.begin("wandofidentify", true);
+  String apiKey = preferences.getString("api_key", "notfound");
+  if apiKey == "notfound" {
+    Serial.println("api key not found")
+  }
+
+  String password = preferences.getString("password", "notfound");
+  if password == "notfound" {
+    Serial.println("password not found")
+  }
+
+  String ssid = preferences.getString("ssid", "notfound");
+  if ssid == "notfound" {
+    Serial.println("ssid not found")
+  }
+
+  initWiFi(ssid, password);
   // Check WiFi connection
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("WiFi not connected");
