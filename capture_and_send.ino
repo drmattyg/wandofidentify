@@ -3,6 +3,7 @@
 #include "esp_camera.h"
 #include <Preferences.h>
 
+const char* lambdaUrl = "https://2i05n9ncye.execute-api.us-east-2.amazonaws.com/Prod/wandOfIdentify";
 
 bool initWiFi(char *ssid, char *password) {
   Serial.println("Connecting to WiFi...");
@@ -34,7 +35,7 @@ bool initWiFi(char *ssid, char *password) {
  * @param api_key Optional API key for the Lambda function (pass empty string if not needed)
  * @return true if successful, false otherwise
  */
-bool captureAndSendImageToLambda(const char* lambda_url) {
+bool captureAndSendImageToLambda() {
   // Get camera frame buffer
   camera_fb_t* fb = esp_camera_fb_get();
   if (!fb) {
@@ -112,12 +113,9 @@ bool captureAndSendImageToLambda(const char* lambda_url) {
  * This is just for reference - you would call this from your main program
  */
 void exampleUsage() {
-  // AWS Lambda endpoint (from API Gateway)
-  const char* lambdaUrl = "https://your-api-id.execute-api.region.amazonaws.com/stage/resource";
-  const char* apiKey = "your-api-key"; // Leave empty if not using API key
   
   // Take picture and send to Lambda
-  bool result = captureAndSendImageToLambda(lambdaUrl, apiKey);
+  bool result = captureAndSendImageToLambda();
   
   if (result) {
     Serial.println("Successfully sent image to Lambda");
