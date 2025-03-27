@@ -1,7 +1,10 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include "esp_camera.h"
+#include <Preferences.h>
 
+const int API_KEY_SIZE = 40;
+char apiKey[API_KEY_SIZE];
 /**
  * Captures an image from the Xiao ESP32S3 camera and sends it to AWS Lambda
  * 
@@ -64,14 +67,26 @@ bool captureAndSendImageToLambda(const char* lambda_url, const char* api_key = "
   return success;
 }
 
-/**
- * Example of how to use the function in your code
- * This is just for reference - you would call this from your main program
- */
+bool getApiKey(char* buffer) {
+  Preferences preferences;
+  preferences.begin("wandofidentify", true);
+  String apiKey = preferences.getString("api_key", "no-key-found");
+  preferences.end();
+  if (apiKey == "no-key-found") {
+    Serial.println("No API key found");
+    return false;
+  }
+  
+  strncpy(buffer, apiKey.c_str(), API_KEY_SIZE - 1);
+  buffer[API_KEY_SIZE - 1] = '\0'; // Fixed: Changed from API_KEY_SIZE to API_KEY_SIZE - 1
+  return true;
+}
+
 void exampleUsage() {
   // AWS Lambda endpoint (from API Gateway)
   const char* lambdaUrl = "https://your-api-id.execute-api.region.amazonaws.com/stage/resource";
-  const char* apiKey = "your-api-key"; // Leave empty if not using API key
+  
+  getApiKey(apiKey);
   
   // Take picture and send to Lambda
   bool result = captureAndSendImageToLambda(lambdaUrl, apiKey);
@@ -82,3 +97,4 @@ void exampleUsage() {
     Serial.println("Failed to send image to Lambda");
   }
 }
+
