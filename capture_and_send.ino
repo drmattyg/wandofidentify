@@ -12,7 +12,7 @@ char apiKey[API_KEY_SIZE];
  * @param api_key Optional API key for the Lambda function (pass empty string if not needed)
  * @return true if successful, false otherwise
  */
-bool captureAndSendImageToLambda(const char* lambda_url, const char* api_key = "") {
+bool captureAndSendImageToLambda() {
   // Get camera frame buffer
   camera_fb_t* fb = esp_camera_fb_get();
   if (!fb) {
@@ -22,6 +22,24 @@ bool captureAndSendImageToLambda(const char* lambda_url, const char* api_key = "
   
   Serial.printf("Image captured, size: %d bytes\n", fb->len);
   
+  Preferences preferences;
+  preferences.begin("wandofidentify", true);
+  String apiKey = preferences.getString("api_key", "notfound");
+  if apiKey == "notfound" {
+    Serial.println("api key not found")
+  }
+
+  String password = preferences.getString("password", "notfound");
+  if password == "notfound" {
+    Serial.println("password not found")
+  }
+
+  String ssid = preferences.getString("ssid", "notfound");
+  if ssid == "notfound" {
+    Serial.println("ssid not found")
+  }
+
+  initWiFi(ssid, password);
   // Check WiFi connection
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("WiFi not connected");
@@ -82,6 +100,13 @@ bool getApiKey(char* buffer) {
   return true;
 }
 
+void setup() {
+  initWiFi();
+}
+
+void loop() {
+  
+}
 void exampleUsage() {
   // AWS Lambda endpoint (from API Gateway)
   const char* lambdaUrl = "https://your-api-id.execute-api.region.amazonaws.com/stage/resource";
@@ -89,7 +114,7 @@ void exampleUsage() {
   getApiKey(apiKey);
   
   // Take picture and send to Lambda
-  bool result = captureAndSendImageToLambda(lambdaUrl, apiKey);
+  bool result = captureAndSendImageToLambda();
   
   if (result) {
     Serial.println("Successfully sent image to Lambda");
