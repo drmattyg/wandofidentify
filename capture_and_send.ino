@@ -109,6 +109,11 @@ bool captureAndSendImageToLambda() {
 // }
 
 void setup() {
+  Serial.begin(115200);
+  while (!Serial) {
+    ; // wait for serial port to connect
+  }
+  Serial.println("Serial initialized");
   Preferences preferences;
   preferences.begin("wandofidentify", true);
   apiKey = preferences.getString("api_key", "notfound");
@@ -144,3 +149,16 @@ void loop() {
   while(true){}
 }
 
+bool checkTouch() {
+  // Using GPIO pin 2 which supports touch sensing on ESP32
+  const int touchPin = 2;  
+  const int threshold = 40; // Adjust this threshold based on testing
+  
+  int touchValue = touchRead(touchPin);
+  
+  // Lower value means touched (capacitance increases)
+  if (touchValue < threshold) {
+    return true;
+  }
+  return false;
+}
