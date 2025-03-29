@@ -4,7 +4,7 @@
 #include "camera_pins.h"
 #include <HTTPClient.h>
 #include <Preferences.h>
-#include <base64.h>
+#include "base64.hpp"
 const int API_KEY_SIZE = 40;
 char apiKeyBuffer[API_KEY_SIZE + 1];
 const char* lambdaUrl = "https://2i05n9ncye.execute-api.us-east-2.amazonaws.com/Prod/wandOfIdentify";
@@ -71,11 +71,13 @@ bool captureAndSendImageToLambda() {
   // if (strlen(apiKeyBuffer) > 0) {
   //   http.addHeader("x-api-key", apiKeyBuffer);
   // }
-  String base64Image = base64::encode(fb->buf, fb->len);
-  Serial.printf("Base64 encoded size: %d bytes\n", base64Image.length());
+  int base64len = 4 * ((fb->len + 2) / 3);
+  unsigned char base64Image[base64len];
+  int nbytes = encode_base64(fb->buf, fb->len, base64Image);
+  Serial.printf("Base64 encoded size: %d bytes\n", nbytes);
   Serial.printf("Image: \n---\n%s\n---\n", base64Image);
   // Create a JSON payload with the base64 image
-  String jsonPayload = "{\"image\":\"" + base64Image + "\"}";
+  String jsonPayload = "{\"image\":\"" + String((char*)base64Image) + "\"}";
 
   // Send HTTP POST request with image data
   int httpResponseCode = http.POST(jsonPayload);
