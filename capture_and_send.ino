@@ -1,9 +1,9 @@
-#include <WiFi.h>
-#include <HTTPClient.h>
 #include "esp_camera.h"
-#include <Preferences.h>
-#include "camera_pins.h"
+#include <WiFi.h>
 #define CAMERA_MODEL_XIAO_ESP32S3 // Has PSRAM
+#include "camera_pins.h"
+#include <HTTPClient.h>
+#include <Preferences.h>
 const int API_KEY_SIZE = 40;
 char apiKeyBuffer[API_KEY_SIZE + 1];
 const char* lambdaUrl = "https://your-api-id.execute-api.region.amazonaws.com/stage/resource";
