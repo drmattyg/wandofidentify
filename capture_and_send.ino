@@ -112,22 +112,23 @@ void configInitCamera(){
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
   config.ledc_timer = LEDC_TIMER_0;
-  config.pin_d0 = 15;
-  config.pin_d1 = 17;
-  config.pin_d2 = 18;
-  config.pin_d3 = 16;
-  config.pin_d4 = 14;
-  config.pin_d5 = 12;
-  config.pin_d6 = 11;
-  config.pin_d7 = 10;
-  config.pin_xclk = 13;
-  config.pin_pclk = 6;
-  config.pin_vsync = 8;
-  config.pin_href = 7;
-  config.pin_sccb_sda = 4;
-  config.pin_sccb_scl = 5;
-  config.pin_pwdn = 9;
-  config.pin_reset = -1;
+  config.pin_d0 = 40;     // Y2
+  config.pin_d1 = 39;     // Y3
+  config.pin_d2 = 38;     // Y4
+  config.pin_d3 = 37;     // Y5
+  config.pin_d4 = 36;     // Y6
+  config.pin_d5 = 35;     // Y7
+  config.pin_d6 = 34;     // Y8
+  config.pin_d7 = 33;     // Y9
+  config.pin_xclk = 42;   // XCLK
+  config.pin_pclk = 41;   // PCLK
+  config.pin_vsync = 4;   // VSYNC
+  config.pin_href = 43;   // HREF
+  config.pin_sccb_sda = 1;// SDA
+  config.pin_sccb_scl = 2;// SCL
+  config.pin_pwdn = 3;    // PWDN/RESET
+  config.pin_reset = -1;  // RESET
+
   config.xclk_freq_hz = 20000000;
   config.frame_size = FRAMESIZE_UXGA;
   config.pixel_format = PIXFORMAT_JPEG;
@@ -139,7 +140,7 @@ void configInitCamera(){
   // Initialize the camera
   esp_err_t err = esp_camera_init(&config);
   if (err != ESP_OK) {
-    Serial.printf("Camera init failed with error 0x%x", err);
+    Serial.printf("Camera init failed with error 0x%x\n", err);
     return;
   }
   Serial.println("Camera initialized successfully");
