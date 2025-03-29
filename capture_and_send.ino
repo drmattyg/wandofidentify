@@ -65,7 +65,7 @@ bool captureAndSendImageToLambda() {
   http.addHeader("Content-Type", "image/jpeg");
   
   // Add API key if provided
-  if (strlen(api_key) > 0) {
+  if (strlen(apiKeyBuffer) > 0) {
     http.addHeader("x-api-key", apiKeyBuffer);
   }
   
@@ -130,7 +130,7 @@ void setup() {
   apiKeyBuffer[API_KEY_SIZE] = '\0';
 
 
-  initWiFi(ssid, password);
+  initWiFi(ssid.c_str(), password.c_str());
 }
 
 void loop() {
