@@ -3,20 +3,11 @@
 #include <base64.h>
 #include <Preferences.h>
 
-const char* imageUrl = ""https://picsum.photos/128/128";"
-
-#include <WiFi.h>
-#include <HTTPClient.h>
-#include "Base64.h" // Use a Base64 library or implement your own
-
-
-
-
-
-
-
+const char* imageUrl = "https://picsum.photos/128/128";
 
 void initWiFi() {
+    String password;
+    String ssid;
   Preferences preferences;
   preferences.begin("wandofidentify", true);
   
@@ -62,11 +53,12 @@ void setup() {
     ; // wait for serial port to connect
   }
   Serial.setDebugOutput(true);
-
+  initWiFi();
 
  
 
   HTTPClient http;
+  char* b64buffer;
   http.begin(imageUrl);
   int httpCode = http.GET();
 
@@ -93,11 +85,15 @@ void setup() {
     }
 
     // Base64 encode the image
-    String encodedImage = base64::encode(imgData, index);
+    int base64Length = 4 * ((len + 2) / 3);
+    b64buffer = (char*)malloc(base64Length + 1);
+    String encodedImage = encode_base64(imgData, base64Length, b64buffer);
+
     Serial.println("Base64 Encoded Image:");
-    Serial.println(encodedImage);
+    Serial.println(b64buffer);
 
     free(imgData);
+    free(b64buffer);
   } else {
     Serial.printf("Failed to fetch image. HTTP Code: %d\n", httpCode);
   }
