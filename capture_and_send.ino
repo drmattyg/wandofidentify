@@ -58,10 +58,10 @@ bool captureAndSendImageToLambda() {
   bool success = false;
   HTTPClient http;
   
-  Serial.printf("Sending image to Lambda: %s\n", lambda_url);
+  Serial.printf("Sending image to Lambda: %s\n", lambdaUrl);
   
   // Configure HTTP request
-  http.begin(lambda_url);
+  http.begin(lambdaUrl);
   http.addHeader("Content-Type", "image/jpeg");
   
   // Add API key if provided
@@ -108,12 +108,53 @@ bool captureAndSendImageToLambda() {
 //   return true;
 // }
 
+void configInitCamera(){
+  camera_config_t config;
+  config.ledc_channel = LEDC_CHANNEL_0;
+  config.ledc_timer = LEDC_TIMER_0;
+  config.pin_d0 = 15;
+  config.pin_d1 = 17;
+  config.pin_d2 = 18;
+  config.pin_d3 = 16;
+  config.pin_d4 = 14;
+  config.pin_d5 = 12;
+  config.pin_d6 = 11;
+  config.pin_d7 = 10;
+  config.pin_xclk = 13;
+  config.pin_pclk = 6;
+  config.pin_vsync = 8;
+  config.pin_href = 7;
+  config.pin_sccb_sda = 4;
+  config.pin_sccb_scl = 5;
+  config.pin_pwdn = 9;
+  config.pin_reset = -1;
+  config.xclk_freq_hz = 20000000;
+  config.frame_size = FRAMESIZE_UXGA;
+  config.pixel_format = PIXFORMAT_JPEG;
+  config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
+  config.fb_location = CAMERA_FB_IN_PSRAM;
+  config.jpeg_quality = 12;
+  config.fb_count = 1;
+  
+  // Initialize the camera
+  esp_err_t err = esp_camera_init(&config);
+  if (err != ESP_OK) {
+    Serial.printf("Camera init failed with error 0x%x", err);
+    return;
+  }
+  Serial.println("Camera initialized successfully");
+}
+
 void setup() {
   Serial.begin(115200);
   while (!Serial) {
     ; // wait for serial port to connect
   }
   Serial.println("Serial initialized");
+  
+  // Initialize camera before other operations
+  configInitCamera();
+  
   Preferences preferences;
   preferences.begin("wandofidentify", true);
   apiKey = preferences.getString("api_key", "notfound");
