@@ -64,16 +64,21 @@ bool captureAndSendImageToLambda() {
   
   // Configure HTTP request
   http.begin(lambdaUrl);
-  http.addHeader("Content-Type", "image/jpeg");
+  http.addHeader("Content-Type", "application/json");
   
   // Add API key if provided
   // Serial.println("API key = " + apiKeyBuffer);
   // if (strlen(apiKeyBuffer) > 0) {
   //   http.addHeader("x-api-key", apiKeyBuffer);
   // }
-  
+  String base64Image = base64::encode(fb->buf, fb->len);
+  Serial.printf("Base64 encoded size: %d bytes\n", base64Image.length());
+  Serial.printf("Image: \n---\n%s\n---\n", base64Image);
+  // Create a JSON payload with the base64 image
+  String jsonPayload = "{\"image\":\"" + base64Image + "\"}";
+
   // Send HTTP POST request with image data
-  int httpResponseCode = http.POST(fb->buf, fb->len);
+  int httpResponseCode = http.POST(jsonPayload);
   
   if (httpResponseCode > 0) {
     // Request was successful
