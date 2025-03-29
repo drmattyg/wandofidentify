@@ -4,9 +4,10 @@
 #include "camera_pins.h"
 #include <HTTPClient.h>
 #include <Preferences.h>
+#include <base64.h>
 const int API_KEY_SIZE = 40;
 char apiKeyBuffer[API_KEY_SIZE + 1];
-const char* lambdaUrl = "https://your-api-id.execute-api.region.amazonaws.com/stage/resource";
+const char* lambdaUrl = "https://2i05n9ncye.execute-api.us-east-2.amazonaws.com/Prod/wandOfIdentify";
 
 String ssid;
 String password;
@@ -66,9 +67,10 @@ bool captureAndSendImageToLambda() {
   http.addHeader("Content-Type", "image/jpeg");
   
   // Add API key if provided
-  if (strlen(apiKeyBuffer) > 0) {
-    http.addHeader("x-api-key", apiKeyBuffer);
-  }
+  // Serial.println("API key = " + apiKeyBuffer);
+  // if (strlen(apiKeyBuffer) > 0) {
+  //   http.addHeader("x-api-key", apiKeyBuffer);
+  // }
   
   // Send HTTP POST request with image data
   int httpResponseCode = http.POST(fb->buf, fb->len);
