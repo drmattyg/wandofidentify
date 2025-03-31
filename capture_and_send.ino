@@ -61,7 +61,7 @@ bool captureAndSendImageToLambda() {
   HTTPClient http;
   
   Serial.printf("Sending image to Lambda: %s\n", lambdaUrl);
-  
+  Serial.println("foo");
   // Configure HTTP request
   http.begin(lambdaUrl);
   http.addHeader("Content-Type", "application/json");
@@ -72,16 +72,28 @@ bool captureAndSendImageToLambda() {
   //   http.addHeader("x-api-key", apiKeyBuffer);
   // }
   int base64len = 4 * ((fb->len + 2) / 3);
-  unsigned char base64Image[base64len];
-  int nbytes = encode_base64(fb->buf, fb->len, base64Image);
+  Serial.println("bar");
+  char* base64Image = (char*)ps_malloc(base64len);
+  Serial.println("baz");
+  int nbytes = encode_base64(fb->buf, fb->len, (unsigned char*)base64Image);
+  Serial.println("quux");
   Serial.printf("Base64 encoded size: %d bytes\n", nbytes);
-  Serial.printf("Image: \n---\n%s\n---\n", base64Image);
+  // Serial.printf("Image: \n---\n%s\n---\n", base64Image);
   // Create a JSON payload with the base64 image
-  String jsonPayload = "{\"image\":\"" + String((char*)base64Image) + "\"}";
+  char* jsonPayload = (char*)ps_malloc(nbytes + 15);
+  Serial.println("blah");
+  sprintf(jsonPayload, "{\"image\":\"%s\"", base64Image);
+  Serial.println("c");
+  // String jsonPayload = "{\"image\":\"" + String((char*)base64Image) + "\"}";
+  
 
   // Send HTTP POST request with image data
-  int httpResponseCode = http.POST(jsonPayload);
-  
+  Serial.println("d");
+  int httpResponseCode = http.POST(String(jsonPayload));
+  Serial.println("e");
+  free((void*)jsonPayload);
+  free((void*)base64Image);
+  Serial.println("f");
   if (httpResponseCode > 0) {
     // Request was successful
     Serial.printf("HTTP Response code: %d\n", httpResponseCode);
