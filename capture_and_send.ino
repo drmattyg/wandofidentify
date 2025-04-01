@@ -6,7 +6,7 @@
 #include <Preferences.h>
 #include "base64.hpp"
 const int API_KEY_SIZE = 40;
-char apiKeyBuffer[API_KEY_SIZE + 1];
+//char apiKeyBuffer[API_KEY_SIZE + 1];
 const char* lambdaUrl = "https://2i05n9ncye.execute-api.us-east-2.amazonaws.com/Prod/wandOfIdentify";
 
 String ssid;
@@ -65,6 +65,7 @@ bool captureAndSendImageToLambda() {
   // Configure HTTP request
   http.begin(lambdaUrl);
   http.addHeader("Content-Type", "application/json");
+  http.addHeader("x-api-key", apiKey);
   
   // Add API key if provided
   // Serial.println("API key = " + apiKeyBuffer);
@@ -119,8 +120,7 @@ bool captureAndSendImageToLambda() {
   // Clean up
   http.end();
   esp_camera_fb_return(fb);
-  // This causes the program to crash after d, not sure why?
-  // free((void*)base64Image);  
+  // free((void*)base64Image);
   // base64Image = NULL;
   
   return success;
@@ -236,8 +236,8 @@ void setup() {
     Serial.println("ssid not found");
   }
   preferences.end();
-  strncpy(apiKeyBuffer, apiKey.c_str(), API_KEY_SIZE);
-  apiKeyBuffer[API_KEY_SIZE] = '\0';
+  // strncpy(apiKeyBuffer, apiKey.c_str(), API_KEY_SIZE);
+  // apiKeyBuffer[API_KEY_SIZE] = '\0';
 
 
   initWiFi(ssid.c_str(), password.c_str());
