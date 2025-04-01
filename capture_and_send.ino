@@ -72,9 +72,17 @@ bool captureAndSendImageToLambda() {
   //   http.addHeader("x-api-key", apiKeyBuffer);
   // }
   int base64len = 4 * ((fb->len + 2) / 3);
+  Serial.printf("Free PSRAM: %d bytes\n", ESP.getFreePsram());
+  Serial.printf("base64len = %d\n", base64len);
   Serial.println("bar");
   char* base64Image = (char*)ps_malloc(base64len);
+  if(!base64Image) {
+    Serial.printf("psmalloc1 failed");
+  }
   Serial.println("baz");
+  if(!fb->buf) {
+    Serial.printf("Fb->buf is null");
+  }
   int nbytes = encode_base64(fb->buf, fb->len, (unsigned char*)base64Image);
   Serial.println("quux");
   Serial.printf("Base64 encoded size: %d bytes\n", nbytes);
@@ -91,8 +99,8 @@ bool captureAndSendImageToLambda() {
   Serial.println("d");
   int httpResponseCode = http.POST(String(jsonPayload));
   Serial.println("e");
-  free((void*)jsonPayload);
-  free((void*)base64Image);
+  // free((void*)jsonPayload);
+  // free((void*)base64Image);
   Serial.println("f");
   if (httpResponseCode > 0) {
     // Request was successful
