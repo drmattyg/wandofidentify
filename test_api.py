@@ -20,6 +20,7 @@ def test_image_recognition(image_path, api_url):
         
         # Convert to base64
         image_b64 = base64.b64encode(image_data).decode('utf-8')
+        print(image_b64)
         
         # Prepare the request
         headers = {

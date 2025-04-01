@@ -1,6 +1,7 @@
 #include "esp_camera.h"
 #include <WiFi.h>
 #define CAMERA_MODEL_XIAO_ESP32S3 // Has PSRAM
+
 #include "camera_pins.h"
 #include <HTTPClient.h>
 #include <Preferences.h>
@@ -91,7 +92,12 @@ bool captureAndSendImageToLambda() {
   // Create a JSON payload with the base64 image
   char* jsonPayload = (char*)ps_malloc(nbytes + 15);
   Serial.println("blah");
-  sprintf(jsonPayload, "{\"image\":\"%s\"", base64Image);
+  #ifdef TEST_IMAGE
+    base64Image = TEST_IMAGE;
+  #endif
+  sprintf(jsonPayload, "{\"image\":\"%s\"}", base64Image);
+
+
   Serial.println("c");
   // String jsonPayload = "{\"image\":\"" + String((char*)base64Image) + "\"}";
   
