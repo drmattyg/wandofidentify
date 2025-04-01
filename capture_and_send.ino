@@ -99,8 +99,8 @@ bool captureAndSendImageToLambda() {
   Serial.println("d");
   int httpResponseCode = http.POST(String(jsonPayload));
   Serial.println("e");
-  // free((void*)jsonPayload);
-  // free((void*)base64Image);
+  free((void*)jsonPayload);
+  jsonPayload = NULL;
   Serial.println("f");
   if (httpResponseCode > 0) {
     // Request was successful
@@ -119,6 +119,9 @@ bool captureAndSendImageToLambda() {
   // Clean up
   http.end();
   esp_camera_fb_return(fb);
+  // This causes the program to crash after d, not sure why?
+  // free((void*)base64Image);  
+  // base64Image = NULL;
   
   return success;
 }
