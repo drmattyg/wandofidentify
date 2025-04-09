@@ -4,9 +4,9 @@
 #include "camera_pins.h"
 #include <HTTPClient.h>
 #include <Preferences.h>
-#include <base64.h>
+#include "base64.hpp"
 const int API_KEY_SIZE = 40;
-char apiKeyBuffer[API_KEY_SIZE + 1];
+//char apiKeyBuffer[API_KEY_SIZE + 1];
 const char* lambdaUrl = "https://2i05n9ncye.execute-api.us-east-2.amazonaws.com/Prod/wandOfIdentify";
 #define touchPin 4
 #define touchThreshold 50000
@@ -63,25 +63,48 @@ bool captureAndSendImageToLambda() {
   HTTPClient http;
   
   Serial.printf("Sending image to Lambda: %s\n", lambdaUrl);
-  
+  Serial.println("foo");
   // Configure HTTP request
   http.begin(lambdaUrl);
   http.addHeader("Content-Type", "application/json");
+  http.addHeader("x-api-key", apiKey);
   
   // Add API key if provided
   // Serial.println("API key = " + apiKeyBuffer);
   // if (strlen(apiKeyBuffer) > 0) {
   //   http.addHeader("x-api-key", apiKeyBuffer);
   // }
-  String base64Image = base64::encode(fb->buf, fb->len);
-  Serial.printf("Base64 encoded size: %d bytes\n", base64Image.length());
-  Serial.printf("Image: \n---\n%s\n---\n", base64Image);
+  int base64len = 4 * ((fb->len + 2) / 3);
+  Serial.printf("Free PSRAM: %d bytes\n", ESP.getFreePsram());
+  Serial.printf("base64len = %d\n", base64len);
+  Serial.println("bar");
+  char* base64Image = (char*)ps_malloc(base64len);
+  if(!base64Image) {
+    Serial.printf("psmalloc1 failed");
+  }
+  Serial.println("baz");
+  if(!fb->buf) {
+    Serial.printf("Fb->buf is null");
+  }
+  int nbytes = encode_base64(fb->buf, fb->len, (unsigned char*)base64Image);
+  Serial.println("quux");
+  Serial.printf("Base64 encoded size: %d bytes\n", nbytes);
+  // Serial.printf("Image: \n---\n%s\n---\n", base64Image);
   // Create a JSON payload with the base64 image
-  String jsonPayload = "{\"image\":\"" + base64Image + "\"}";
+  char* jsonPayload = (char*)ps_malloc(nbytes + 15);
+  Serial.println("blah");
+  sprintf(jsonPayload, "{\"image\":\"%s\"", base64Image);
+  Serial.println("c");
+  // String jsonPayload = "{\"image\":\"" + String((char*)base64Image) + "\"}";
+  
 
   // Send HTTP POST request with image data
-  int httpResponseCode = http.POST(jsonPayload);
-  
+  Serial.println("d");
+  int httpResponseCode = http.POST(String(jsonPayload));
+  Serial.println("e");
+  free((void*)jsonPayload);
+  jsonPayload = NULL;
+  Serial.println("f");
   if (httpResponseCode > 0) {
     // Request was successful
     Serial.printf("HTTP Response code: %d\n", httpResponseCode);
@@ -99,6 +122,8 @@ bool captureAndSendImageToLambda() {
   // Clean up
   http.end();
   esp_camera_fb_return(fb);
+  // free((void*)base64Image);
+  // base64Image = NULL;
   
   return success;
 }
@@ -213,8 +238,8 @@ void setup() {
     Serial.println("ssid not found");
   }
   preferences.end();
-  strncpy(apiKeyBuffer, apiKey.c_str(), API_KEY_SIZE);
-  apiKeyBuffer[API_KEY_SIZE] = '\0';
+  // strncpy(apiKeyBuffer, apiKey.c_str(), API_KEY_SIZE);
+  // apiKeyBuffer[API_KEY_SIZE] = '\0';
 
 
   initWiFi(ssid.c_str(), password.c_str());
