@@ -6,6 +6,19 @@
 #include <HTTPClient.h>
 #include <Preferences.h>
 #include "base64.hpp"
+// Add OLED display libraries
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+// OLED display configuration
+#define SCREEN_WIDTH 128 // OLED display width in pixels
+#define SCREEN_HEIGHT 64 // OLED display height in pixels
+#define OLED_RESET     -1 // Reset pin (-1 if sharing Arduino reset pin)
+#define SCREEN_ADDRESS 0x3C // I2C address (0x3C or 0x3D typically)
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
 const int API_KEY_SIZE = 40;
 //char apiKeyBuffer[API_KEY_SIZE + 1];
 const char* lambdaUrl = "https://2i05n9ncye.execute-api.us-east-2.amazonaws.com/Prod/wandOfIdentify";
@@ -13,6 +26,62 @@ const char* lambdaUrl = "https://2i05n9ncye.execute-api.us-east-2.amazonaws.com/
 String ssid;
 String password;
 String apiKey;
+
+// OLED display functions
+bool initDisplay() {
+  // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
+  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    return false;
+  }
+  
+  // Clear the buffer
+  display.clearDisplay();
+  display.display();
+  return true;
+}
+
+void displayText(const char* text, int16_t x, int16_t y, uint8_t textSize = 1, 
+                bool color = SSD1306_WHITE, bool centered = false) {
+  // Clear the display
+  display.clearDisplay();
+  
+  // Set text properties
+  display.setTextSize(textSize);
+  display.setTextColor(color);
+  
+  // Center text if requested
+  if (centered) {
+    int16_t x1, y1;
+    uint16_t w, h;
+    display.getTextBounds(text, 0, 0, &x1, &y1, &w, &h);
+    x = (SCREEN_WIDTH - w) / 2;
+  }
+  
+  // Set cursor and print text
+  display.setCursor(x, y);
+  display.println(text);
+  
+  // Update display
+  display.display();
+}
+
+void displayMultipleLines(const char* lines[], int numLines, int16_t startY = 0, 
+                         int16_t lineHeight = 10, uint8_t textSize = 1) {
+  display.clearDisplay();
+  display.setTextSize(textSize);
+  display.setTextColor(SSD1306_WHITE);
+  
+  int16_t y = startY;
+  
+  for (int i = 0; i < numLines; i++) {
+    display.setCursor(0, y);
+    display.println(lines[i]);
+    y += lineHeight;
+  }
+  
+  display.display();
+}
 
 void initWiFi(const char* ssid, const char* password) {
     // Begin WiFi connection
@@ -22,6 +91,8 @@ void initWiFi(const char* ssid, const char* password) {
     // Wait for connection with timeout
     int timeout = 0;
     Serial.print("Connecting to WiFi");
+    displayText("Connecting to WiFi", 0, 0, 1, SSD1306_WHITE, false);
+    
     while (WiFi.status() != WL_CONNECTED && timeout < 30) {
         delay(1000);
         Serial.print(".");
@@ -33,8 +104,12 @@ void initWiFi(const char* ssid, const char* password) {
         Serial.println("\nConnected to WiFi network!");
         Serial.print("IP Address: ");
         Serial.println(WiFi.localIP());
+        displayText("WiFi Connected!", 0, 0, 1, SSD1306_WHITE, true);
+        delay(1000);
     } else {
         Serial.println("\nFailed to connect to WiFi!");
+        displayText("WiFi Failed!", 0, 0, 1, SSD1306_WHITE, true);
+        delay(2000);
         // You might want to handle the failure case here
         // For example, restart the ESP32 or retry connection
     }
@@ -49,14 +124,16 @@ void initWiFi(const char* ssid, const char* password) {
  */
 bool captureAndSendImageToLambda() {
   // Get camera frame buffer
+  displayText("Taking photo...", 0, 0, 1, SSD1306_WHITE, true);
   camera_fb_t* fb = esp_camera_fb_get();
   if (!fb) {
     Serial.println("Camera capture failed");
+    displayText("Camera failed!", 0, 0, 1, SSD1306_WHITE, true);
     return false;
   }
   
   Serial.printf("Image captured, size: %d bytes\n", fb->len);
-  
+  displayText("Processing...", 0, 0, 1, SSD1306_WHITE, true);
   
   bool success = false;
   HTTPClient http;
@@ -80,6 +157,7 @@ bool captureAndSendImageToLambda() {
   char* base64Image = (char*)ps_malloc(base64len);
   if(!base64Image) {
     Serial.printf("psmalloc1 failed");
+    displayText("Memory error!", 0, 0, 1, SSD1306_WHITE, true);
   }
   Serial.println("baz");
   if(!fb->buf) {
@@ -101,7 +179,7 @@ bool captureAndSendImageToLambda() {
   Serial.println("c");
   // String jsonPayload = "{\"image\":\"" + String((char*)base64Image) + "\"}";
   
-
+  displayText("Sending...", 0, 0, 1, SSD1306_WHITE, true);
   // Send HTTP POST request with image data
   Serial.println("d");
   int httpResponseCode = http.POST(String(jsonPayload));
@@ -115,11 +193,18 @@ bool captureAndSendImageToLambda() {
     String payload = http.getString();
     Serial.println("Response:");
     Serial.println(payload);
+    displayText("Success!", 0, 0, 1, SSD1306_WHITE, true);
+    delay(1000);
+    displayText(payload.c_str(), 0, 0, 1, SSD1306_WHITE, false);
     success = true;
   } else {
     // Request failed
     Serial.printf("HTTP Error: %d\n", httpResponseCode);
     Serial.println(http.errorToString(httpResponseCode).c_str());
+    displayText("Error sending!", 0, 0, 1, SSD1306_WHITE, true);
+    delay(1000);
+    String errorMsg = "HTTP Error: " + String(httpResponseCode);
+    displayText(errorMsg.c_str(), 0, 0, 1, SSD1306_WHITE, false);
     success = false;
   }
   
@@ -222,6 +307,12 @@ void setup() {
 
   Serial.println("Serial initialized");
   
+  // Initialize OLED display
+  if (initDisplay()) {
+    displayText("Wand of Identify", 0, 10, 1, SSD1306_WHITE, true);
+    displayText("Initializing...", 0, 30, 1, SSD1306_WHITE, true);
+  }
+  
   // Initialize camera before other operations
   configInitCamera();
   
@@ -230,34 +321,47 @@ void setup() {
   apiKey = preferences.getString("api_key", "notfound");
   if (apiKey == "notfound") {
     Serial.println("api key not found");
+    displayText("API key not found", 0, 0, 1, SSD1306_WHITE, false);
+    delay(2000);
   }
 
   password = preferences.getString("password", "notfound");
   if (password == "notfound") {
     Serial.println("password not found");
+    displayText("WiFi password not found", 0, 0, 1, SSD1306_WHITE, false);
+    delay(2000);
   }
 
   ssid = preferences.getString("ssid", "notfound");
   if (ssid == "notfound") {
     Serial.println("ssid not found");
+    displayText("WiFi SSID not found", 0, 0, 1, SSD1306_WHITE, false);
+    delay(2000);
   }
   preferences.end();
   // strncpy(apiKeyBuffer, apiKey.c_str(), API_KEY_SIZE);
   // apiKeyBuffer[API_KEY_SIZE] = '\0';
 
-
   initWiFi(ssid.c_str(), password.c_str());
 }
 
 void loop() {
-    bool result = captureAndSendImageToLambda();
-  
-  if (result) {
-    Serial.println("Successfully sent image to Lambda");
-  } else {
-    Serial.println("Failed to send image to Lambda");
-  }
-  while(true){}
+    displayText("Ready to Identify", 0, 10, 1, SSD1306_WHITE, true);
+    displayText("Press button...", 0, 30, 1, SSD1306_WHITE, false);
+    
+    // Check if touch pin is activated (you can modify this to use a button)
+    if (checkTouch()) {
+      bool result = captureAndSendImageToLambda();
+    
+      if (result) {
+        Serial.println("Successfully sent image to Lambda");
+      } else {
+        Serial.println("Failed to send image to Lambda");
+      }
+      delay(3000); // Wait before allowing another capture
+    }
+    
+    delay(100); // Small delay to prevent busy-waiting
 }
 
 bool checkTouch() {
