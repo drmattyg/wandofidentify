@@ -22,6 +22,8 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 const int API_KEY_SIZE = 40;
 //char apiKeyBuffer[API_KEY_SIZE + 1];
 const char* lambdaUrl = "https://2i05n9ncye.execute-api.us-east-2.amazonaws.com/Prod/wandOfIdentify";
+#define touchPin 4
+#define touchThreshold 50000
 
 String ssid;
 String password;
@@ -365,14 +367,9 @@ void loop() {
 }
 
 bool checkTouch() {
-  // Using GPIO pin 2 which supports touch sensing on ESP32
-  const int touchPin = 2;  
-  const int threshold = 40; // Adjust this threshold based on testing
-  
   int touchValue = touchRead(touchPin);
   
-  // Lower value means touched (capacitance increases)
-  if (touchValue < threshold) {
+  if (touchValue > touchThreshold) {
     return true;
   }
   return false;
